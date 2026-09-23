@@ -1,0 +1,29 @@
+[package]
+name = "inbound-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "inbound-server"
+path = "src/main.rs"
+
+[dependencies]
+inbound-types.workspace = true
+inbound-operator.workspace = true
+commonware-codec.workspace = true
+commonware-cryptography.workspace = true
+commonware-runtime.workspace = true
+commonware-storage.workspace = true
+axum.workspace = true
+tokio.workspace = true
+futures.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+async-stream.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
+
+[lints]
+workspace = true

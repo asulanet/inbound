@@ -1,0 +1,24 @@
+[package]
+name = "inbound-watch"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "inbound-watch"
+path = "src/main.rs"
+
+[dependencies]
+inbound-types.workspace = true
+inbound-agent.workspace = true
+commonware-codec.workspace = true
+commonware-cryptography.workspace = true
+tokio.workspace = true
+futures.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+
+[lints]
+workspace = true
