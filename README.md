@@ -15,16 +15,16 @@ cargo run --bin inbound-server
 cargo run --bin inbound-watch -- http://127.0.0.1:7402 maya
 ```
 
-A third terminal makes the point, because the same feed gives a different answer:
+A third terminal makes the point, because the same operator gives a different answer:
 
 ```bash
 cargo run --bin inbound-watch -- http://127.0.0.1:7402 sam
 ```
 
-Maya is new to every shop and buys a $120 basket. Sam already shops at runfast and buys a $50 one.
-They receive identical offers and hold different ones. Runfast never wins for Sam, because the
-better terms are for someone who has never bought there, and Sam has. Neither agent asks the
-channel anything, and neither user is interrupted.
+Ten shops post into three channels. Maya asked her agent to watch shoes and would spend $120, so
+it subscribes to one channel. Sam asked for coffee and shoes and would spend $50, so his
+subscribes to two. Runfast never wins for Sam: its better terms are for someone who has never
+bought there, and he has.
 
 ## How it works
 
@@ -67,6 +67,52 @@ Who ends up knowing what:
 The channel's advantage over a search engine is not that it knows more. It knows strictly less. It
 is just pointed the other way.
 
+## How an agent finds a channel
+
+One URL in, everything needed to subscribe out.
+
+```bash
+curl -s http://127.0.0.1:7402/registry
+```
+
+```json
+{ "channels": [
+    { "channel": "cashback/us/sportswear",
+      "offers": 12,
+      "listening": 2,
+      "stream": "http://127.0.0.1:7402/channels/cashback/us/sportswear/stream",
+      "since":  "http://127.0.0.1:7402/channels/cashback/us/sportswear/offers?since=0" } ],
+  "mcp": "http://127.0.0.1:7402/mcp" }
+```
+
+An agent reads that, keeps the channels its directive names, catches up through `since`, and
+holds `stream` open. There is no registration and no key exchange: reading a channel is
+anonymous, and the operator learns only that its subscriber count went up.
+
+A directory listing several operators would be one more JSON file above this. It does not exist
+yet, and for a demo pointing an agent at one URL is enough.
+
+## Directives
+
+An agent is a person's facts plus their standing instruction:
+
+```rust
+Directive {
+    about: "running shoes before the marathon",
+    channels: ["cashback/us/sportswear"],
+    budget: 12_000,          // what they would actually spend, in cents
+    worth_waking_me: 2_500,  // do not interrupt below this
+}
+```
+
+The directive decides three things: which channels to subscribe to, what the reward is judged
+against (so a $4 coffee and a $30,000 car are not compared on percentages), and when the person
+wanted to be interrupted.
+
+Holding and surfacing are separate decisions on purpose. Sam's agent held `stride` at $7.56 and
+said nothing for five offers, because his bar was $8. When a later offer crossed it, the agent
+spoke. An agent that conflates the two either nags or sits quietly on something good.
+
 ## Connecting something else
 
 Nothing about the two agents above is special. The channel is plain HTTP:
@@ -97,9 +143,10 @@ way past has its offers dropped by the agents reading them.
 | `src/offer.rs` | The offer: signed, typed fields, no free text. Better terms unlocked by a predicate. |
 | `src/channel.rs` | The channel: an append-only log, and the fan-out to everyone listening. |
 | `src/rank.rs` | The buyer's side: local predicate checks, then verify, shuffle, sort. |
-| `src/sellers.rs` | Four made-up shoe shops, so the channel has something in it. |
-| `src/bin/server.rs` | HTTP, SSE and MCP over a channel. |
-| `src/bin/watch.rs` | An agent that connects to a channel it does not run. |
+| `src/directive.rs` | What a person asked their agent to watch for, and what it does about an offer. |
+| `src/sellers.rs` | Ten made-up shops across three channels, so the channels have something in them. |
+| `src/bin/server.rs` | The registry, HTTP, SSE and MCP over every channel. |
+| `src/bin/watch.rs` | An agent that reads the registry, subscribes, and acts on its directive. |
 
 Offers carry fixed fields and nothing a seller could write prose into, which is the point: an
 agent reading this channel cannot be talked round the way a web page talks it round. Ranking is
@@ -114,9 +161,10 @@ deterministic bytes a signature needs to mean anything, `cryptography` for names
 
 The blog describes a protocol. This is the part of it that makes the demo work, and nothing else.
 
-- **No registry.** An agent is pointed at a channel rather than discovering one.
 - **No acceptance, settlement or ledger.** Offers are received and ranked; taking one is out of
-  scope here.
+  scope here, so nothing is ever bought and no seller is ever billed.
+- **One operator.** The registry lists that operator's own channels. A directory of operators
+  would sit above it and does not exist.
 - **Predicates are checked, never proved.** The agent decides locally whether better terms apply.
   Proving that to a seller, in zero knowledge or otherwise, is the extension the blog describes.
 - **No bond.** Anyone with a keypair can post. Making spam cost something needs a deposit the

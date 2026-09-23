@@ -1,0 +1,32 @@
+# fly launch --no-deploy  then  fly deploy
+#
+# Long-lived SSE connections are the whole point, so the machine must not be stopped when idle:
+# an agent holding a stream open looks like no traffic at all.
+
+app = "inbound-demo"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  EVERY_SECONDS = "8"
+  STORAGE_DIR = "/data/storage"
+  # Set this to the real hostname so the registry hands agents URLs they can reach.
+  PUBLIC_URL = "https://inbound-demo.fly.dev"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[mounts]]
+  source = "inbound_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
