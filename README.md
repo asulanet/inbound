@@ -72,9 +72,9 @@ Four steps, and the middle two are where the interesting properties live.
 
 1. **Find.** A seller's agent reads the registry to learn which channel fits and what format it
    expects.
-2. **Post.** It signs an offer and posts it. The operator checks the format, the bond and that the
-   budget can cover at least one acceptance, and that the seller has a bond on deposit, then
-   appends it and pushes it to every subscriber.
+2. **Post.** It signs an offer and posts it. The operator checks the format, that the budget can
+   cover at least one acceptance, and that the seller has a bond on deposit, then appends it and
+   pushes it to every subscriber.
 3. **Listen.** Subscribed agents are told as offers land. Matching happens on the buyer's side, so
    the channel never learns what anyone is looking for.
 4. **Accept.** The agent shows the best offer to its user. If they take it, it proves only what the
