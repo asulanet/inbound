@@ -26,6 +26,47 @@ They receive identical offers and hold different ones. Runfast never wins for Sa
 better terms are for someone who has never bought there, and Sam has. Neither agent asks the
 channel anything, and neither user is interrupted.
 
+## How it works
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as sellers
+    participant O as channel
+    participant M as maya's agent
+    participant A as sam's agent
+
+    M->>O: subscribe
+    A->>O: subscribe
+    Note over O: two queues, and nothing else.<br/>not who they are, not what they want.
+
+    S->>O: signed offer
+    O->>O: check signature, append to log
+    O--)M: push
+    O--)A: push
+
+    Note over M: verify from the signed bytes<br/>check predicates against own data<br/>shuffle, then rank
+    Note over A: same offer, different data
+
+    M-->>M: better → runfast $28.18
+    A-->>A: nothing better, pass
+```
+
+Steps 6 and 7 are the whole idea: the channel writes to the agents, and neither agent asked. Steps
+8 and 9 are why there is no leaderboard — the ranking runs on each agent's own machine, against
+facts that never left it, so the same offer is worth different amounts to different people.
+
+Who ends up knowing what:
+
+| | Sees the offers | Sees who is listening | Sees what anyone wants | Sees the ranking |
+| --- | --- | --- | --- | --- |
+| Seller | its own | no | no | no |
+| Channel | all | a count | no | no |
+| Agent | all | itself | its own user | its own |
+
+The channel's advantage over a search engine is not that it knows more. It knows strictly less. It
+is just pointed the other way.
+
 ## Connecting something else
 
 Nothing about the two agents above is special. The channel is plain HTTP:
