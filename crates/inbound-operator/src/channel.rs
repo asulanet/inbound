@@ -6,7 +6,8 @@ use commonware_storage::journal::contiguous::{
 };
 use commonware_utils::{NZU16, NZU64, NZUsize};
 use futures::channel::mpsc;
-use inbound_types::{ChannelSpec, Offer};
+use inbound_types::{ChannelSpec, Offer, PublicKey};
+use std::collections::HashMap;
 use std::num::NonZeroU16;
 
 const PAGE_SIZE: NonZeroU16 = NZU16!(4096);
@@ -49,6 +50,9 @@ pub struct ChannelLog<E: commonware_storage::Context> {
     spec: ChannelSpec,
     journal: Option<Journal<E, Offer>>,
     subscribers: Vec<mpsc::UnboundedSender<Delivery>>,
+    /// Bonds the operator is actually holding, by seller. A seller cannot talk its way past this
+    /// by writing a number in its own offer.
+    bonds: HashMap<PublicKey, u64>,
 }
 
 impl<E: commonware_storage::Context> ChannelLog<E> {
@@ -70,11 +74,24 @@ impl<E: commonware_storage::Context> ChannelLog<E> {
             spec,
             journal: Some(journal),
             subscribers: Vec::new(),
+            bonds: HashMap::new(),
         })
     }
 
     pub fn spec(&self) -> &ChannelSpec {
         &self.spec
+    }
+
+    /// A seller puts money up before it may post. Nothing here slashes it yet; what this buys
+    /// today is that posting is not free to a stranger.
+    pub fn deposit_bond(&mut self, seller: PublicKey, amount: u64) -> u64 {
+        let entry = self.bonds.entry(seller).or_insert(0);
+        *entry += amount;
+        *entry
+    }
+
+    pub fn bond_held(&self, seller: &PublicKey) -> u64 {
+        self.bonds.get(seller).copied().unwrap_or(0)
     }
 
     pub fn subscribers(&self) -> usize {
@@ -110,10 +127,11 @@ impl<E: commonware_storage::Context> ChannelLog<E> {
                 offer.body.format, self.spec.format
             )));
         }
-        if offer.body.bond < self.spec.min_bond {
+        let held = self.bond_held(&offer.body.seller);
+        if held < self.spec.min_bond {
             return Err(Error::Rejected(format!(
-                "bond {} below the channel minimum {}",
-                offer.body.bond, self.spec.min_bond
+                "seller has {held} on deposit, channel requires {}",
+                self.spec.min_bond
             )));
         }
         if offer.body.budget < offer.body.max_reward() {

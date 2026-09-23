@@ -93,7 +93,6 @@ pub fn next_offer(
         valid_from: now,
         valid_until: now + lifetime * DAY,
         budget: 500_000,
-        bond: 50_000,
         nonce,
     };
     (index, Offer::sign(&seller.key, body))

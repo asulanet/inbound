@@ -80,7 +80,11 @@ async fn run(
         },
     );
 
-    let log = ChannelLog::init(context.child("channel"), spec).await?;
+    let mut log = ChannelLog::init(context.child("channel"), spec).await?;
+    // Sellers put money up with the operator before any of them may post.
+    for seller in sellers() {
+        log.deposit_bond(seller.public_key(), 50_000);
+    }
     let server: Shared = Arc::new(Server {
         registry,
         channel: channel.clone(),

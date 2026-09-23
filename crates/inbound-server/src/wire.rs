@@ -18,7 +18,6 @@ pub struct WireOffer {
     pub valid_from: u64,
     pub valid_until: u64,
     pub budget: u64,
-    pub bond: u64,
     pub bytes: String,
 }
 
@@ -84,7 +83,6 @@ impl WireOffer {
             valid_from: offer.body.valid_from,
             valid_until: offer.body.valid_until,
             budget: offer.body.budget,
-            bond: offer.body.bond,
             bytes: hex::encode(offer.encode()),
         }
     }

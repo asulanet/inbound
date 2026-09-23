@@ -51,8 +51,6 @@ pub struct OfferBody {
     pub valid_from: u64,
     pub valid_until: u64,
     pub budget: u64,
-    /// Locked by the seller when posting, slashable by the operator for a broken offer.
-    pub bond: u64,
     pub nonce: u64,
 }
 
@@ -188,7 +186,6 @@ impl Write for OfferBody {
         self.valid_from.write(buf);
         self.valid_until.write(buf);
         self.budget.write(buf);
-        self.bond.write(buf);
         self.nonce.write(buf);
     }
 }
@@ -204,7 +201,6 @@ impl EncodeSize for OfferBody {
             + self.valid_from.encode_size()
             + self.valid_until.encode_size()
             + self.budget.encode_size()
-            + self.bond.encode_size()
             + self.nonce.encode_size()
     }
 }
@@ -223,7 +219,6 @@ impl Read for OfferBody {
             valid_from: u64::read(buf)?,
             valid_until: u64::read(buf)?,
             budget: u64::read(buf)?,
-            bond: u64::read(buf)?,
             nonce: u64::read(buf)?,
         })
     }

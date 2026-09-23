@@ -115,7 +115,6 @@ pub fn month_of_traffic(
                 valid_from: start + day * DAY,
                 valid_until: start + (day + lifetime).min(days) * DAY,
                 budget: 500_000,
-                bond: 50_000,
                 nonce,
             };
             postings.push(Posting {

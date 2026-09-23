@@ -62,7 +62,7 @@ an operator that quietly rewrites a rate has its offers dropped by the agents re
 | Predicate | A property of the buyer a seller will give better terms for, like "has never bought from me". |
 | Proof | Evidence a predicate holds, bound to one seller and short-lived. |
 | Acceptance | The agent taking an offer, with any proofs the better terms require. |
-| Bond | What a seller locks to post at all, so spam costs money. |
+| Bond | What a seller has on deposit with the operator. No deposit, no posting. |
 | Budget | What a seller sets aside to honour an offer. Acceptances reserve against it. |
 | Settlement | A payment the operator saw itself, which is how a sale is verified. |
 
@@ -73,7 +73,8 @@ Four steps, and the middle two are where the interesting properties live.
 1. **Find.** A seller's agent reads the registry to learn which channel fits and what format it
    expects.
 2. **Post.** It signs an offer and posts it. The operator checks the format, the bond and that the
-   budget can cover at least one acceptance, then appends it and pushes it to every subscriber.
+   budget can cover at least one acceptance, and that the seller has a bond on deposit, then
+   appends it and pushes it to every subscriber.
 3. **Listen.** Subscribed agents are told as offers land. Matching happens on the buyer's side, so
    the channel never learns what anyone is looking for.
 4. **Accept.** The agent shows the best offer to its user. If they take it, it proves only what the
@@ -110,7 +111,9 @@ channel does not need any.
   let anyone operate a channel.
 - **State is in memory.** Only offers are journaled. Budgets, reservations and nullifiers are lost
   on restart.
-- **The bond is a number.** Checked when posting, never held or slashed.
+- **The bond is held but never slashed.** The operator tracks what each seller deposited and
+  refuses to publish without one, so posting costs a stranger something. There is no condition
+  under which it is taken, because there is no checkable definition of a broken offer yet.
 - **No webhooks.** Push reaches a connected agent. Waking one that is off needs a registered
   callback, which is not built.
 

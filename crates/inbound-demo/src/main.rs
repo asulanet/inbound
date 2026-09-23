@@ -73,6 +73,9 @@ async fn run(
     let mut log = ChannelLog::init(context.child("channel"), spec).await?;
 
     let sellers = sellers();
+    for seller in &sellers {
+        log.deposit_bond(seller.public_key(), 50_000);
+    }
     let postings = month_of_traffic(&sellers, &channel, &format, OCTOBER, DAYS, 2_026);
 
     // Two people subscribed to the same channel. Maya is new to all of these shops. Sam has

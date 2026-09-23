@@ -115,14 +115,26 @@ impl Ledger {
     /// Matches a payment the operator observed against an outstanding reservation. This is the
     /// only event that bills the seller.
     pub fn settle(&mut self, settlement: &Settlement) -> Option<Sale> {
-        let matched = self.reservations.iter().find_map(|(id, reservation)| {
-            let offer = self.offers.get(&reservation.offer)?;
-            let fits = offer.body.seller == settlement.seller
-                && reservation.buyer_root == settlement.buyer_root
-                && settlement.amount >= offer.body.min_spend
-                && offer.is_live_at(settlement.settled_at);
-            fits.then_some(*id)
-        })?;
+        // A buyer can hold more than one reservation with the same seller, so pick deliberately
+        // rather than taking whatever the map yields first: best for the buyer, then by id so the
+        // choice is stable across runs.
+        let matched = self
+            .reservations
+            .iter()
+            .filter_map(|(id, reservation)| {
+                let offer = self.offers.get(&reservation.offer)?;
+                let fits = offer.body.seller == settlement.seller
+                    && reservation.buyer_root == settlement.buyer_root
+                    && settlement.amount >= offer.body.min_spend
+                    && offer.is_live_at(settlement.settled_at);
+                let reward = offer
+                    .body
+                    .reward_for(&reservation.proven)
+                    .value_for(settlement.amount);
+                fits.then_some((reward, *id))
+            })
+            .max_by(|left, right| left.0.cmp(&right.0).then_with(|| right.1.cmp(&left.1)))
+            .map(|(_, id)| id)?;
         let reservation = self.reservations.remove(&matched)?;
         let offer = self.offers.get(&reservation.offer)?;
         let reward = offer
