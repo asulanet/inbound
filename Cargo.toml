@@ -1,44 +1,37 @@
-[workspace]
-members = [
-    "crates/inbound-types",
-    "crates/inbound-operator",
-    "crates/inbound-agent",
-    "crates/inbound-demo",
-    "crates/inbound-server",
-    "crates/inbound-watch",
-]
-resolver = "3"
-
-[workspace.package]
+[package]
+name = "inbound"
 version = "0.0.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
-[workspace.dependencies]
-inbound-types = { path = "crates/inbound-types" }
-inbound-operator = { path = "crates/inbound-operator" }
-inbound-agent = { path = "crates/inbound-agent" }
+[[bin]]
+name = "inbound-server"
+path = "src/bin/server.rs"
 
+[[bin]]
+name = "inbound-watch"
+path = "src/bin/watch.rs"
+
+[dependencies]
 commonware-codec = "2026.9.0"
 commonware-cryptography = "2026.9.0"
 commonware-runtime = "2026.9.0"
 commonware-storage = "2026.9.0"
 commonware-utils = "2026.9.0"
 
+async-stream = "0.3"
+axum = "0.8"
 bytes = "1"
 futures = "0.3"
-axum = "0.8"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "signal"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
 hex = "0.4"
-async-stream = "0.3"
 rand = "0.10"
 rand_chacha = "0.10"
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 thiserror = "2"
-tracing = "0.1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time"] }
 
-[workspace.lints.clippy]
+[lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"

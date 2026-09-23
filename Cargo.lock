@@ -1487,89 +1487,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "inbound-agent"
+name = "inbound"
 version = "0.0.1"
 dependencies = [
- "commonware-codec",
- "commonware-cryptography",
- "inbound-types",
- "rand 0.10.3",
- "rand_chacha 0.10.0",
- "thiserror",
-]
-
-[[package]]
-name = "inbound-demo"
-version = "0.0.1"
-dependencies = [
- "commonware-cryptography",
- "commonware-runtime",
- "commonware-storage",
- "inbound-agent",
- "inbound-operator",
- "inbound-types",
- "rand 0.10.3",
- "rand_chacha 0.10.0",
-]
-
-[[package]]
-name = "inbound-operator"
-version = "0.0.1"
-dependencies = [
+ "async-stream",
+ "axum",
+ "bytes",
  "commonware-codec",
  "commonware-cryptography",
  "commonware-runtime",
  "commonware-storage",
  "commonware-utils",
  "futures",
- "inbound-types",
- "thiserror",
-]
-
-[[package]]
-name = "inbound-server"
-version = "0.0.1"
-dependencies = [
- "async-stream",
- "axum",
- "commonware-codec",
- "commonware-cryptography",
- "commonware-runtime",
- "commonware-storage",
- "futures",
  "hex",
- "inbound-operator",
- "inbound-types",
  "rand 0.10.3",
  "rand_chacha 0.10.0",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "inbound-types"
-version = "0.0.1"
-dependencies = [
- "bytes",
- "commonware-codec",
- "commonware-cryptography",
- "thiserror",
-]
-
-[[package]]
-name = "inbound-watch"
-version = "0.0.1"
-dependencies = [
- "commonware-codec",
- "commonware-cryptography",
- "futures",
- "hex",
- "inbound-agent",
- "inbound-types",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
 ]
 
