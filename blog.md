@@ -36,34 +36,34 @@ We've set all of the first three sections to convey: untrusted targeted communic
 
 Inbound is a way for a business to put an offer in front of someone's agent without going through a search engine.  We'll talk about this in the context of the user "buying" something via an agent and the agent becoming the intermediary between the user and the business they'd like to buy from.
 
-Technically, Inbound is a protocol that maintains a set of **topics** run by operators. Agents can subscribe to topics to receive updates about them. The agent can then go and rank the **offers** in a given topic and present a subset to its user.  **Sellers** can then post to different channels, they don't need to know who is subscribing to the channel or how their results will be ranked. NB: sellers may need to be whitelisted or have to post a bond to be able to prevent sybil but we won't dive into this topic in the post to keep things higher level.
+Technically, Inbound is a protocol that maintains a set of **topics** run by operators. Agents subscribe to an operator to receive updates from all of its topics. The agent can then go and rank the **offers** in the topics its user cares about and present a subset to its user.  **Sellers** can then post to different channels, they don't need to know who is listening or how their results will be ranked. NB: sellers may need to be whitelisted or have to post a bond to be able to prevent sybil but we won't dive into this topic in the post to keep things higher level.
 
 Why would anyone want this?
 
-For the user:  Their agent states an interest and offers keep arriving against it, it compares all of them and instead of taking a one time snapshot the user's agent is able to make a more informed decision about "what to buy".  The agent can always do the web search so that inbound offers strictly improve on naive web search results.  This format also allows the user to be "targeted" without leaking their information.
+For the user:  Their agent holds a standing interest and offers keep arriving against it, it compares all of them and instead of taking a one time snapshot the user's agent is able to make a more informed decision about "what to buy".  The agent can always do the web search so that inbound offers strictly improve on naive web search results.  Nothing about the user travels to find these offers. The offers travel to the agent, every agent gets the same ones, and the choosing happens where the user's facts already are.
 
-For the business: Businesses don't have to pay anything to the topic operator until they sell something. Moreover, they know that subscribers of the topic are likely to be genuinely interested in the topic.
+For the business: Businesses don't have to pay anything to the topic operator until they sell something. Moreover, they know an offer is only shown to a person whose agent judged it worth their attention.
 
-NB: the operator can get paid either when a sale happens via inbound. Or there is a version of this setup where the offers have masked information about the seller, so when the agent picks a group of sellers for its user, the agent might have to pay to learn who the seller actually is (this moves the cost of discovery from the seller to the user which might be unintended but its just a potential design choice of letting people maintain their privacy).
+NB: the operator gets paid when a sale happens via inbound.
 
 Below, we'll go through some detail about Inbound and then finish off with sharing some other ways Inbound can be used in interesting ways.
 
 ## Channels
 
-A channel is a named topic, something like `cars/ev/us`. Sellers post into it, agents subscribe to it.  Sellers post a bond so in case of any griefing the seller can be penalized.
+A channel is a named topic, something like `cars/ev/us`. Sellers post into it, agents read from it.  Sellers post a bond so in case of any griefing the seller can be penalized.
 
 This idea of broadcasting your intent to buy something isn't new. Crypto already works this way: you publish the trade you want and solvers compete to fill it.  The consumer version has also been tried in a few different formats before but:
 
 - **Sellers refused to compete in public.** TrueCar, a US car-buying site, had dealers bid against each other on price for each buyer. About a third of its 5,600 dealers quit within three months in early 2012. TrueCar then dropped the intent product.
 - **The request became a lead.** Ask a comparison site for a mortgage and it doesn't go and find you a mortgage. It sells your details to five lenders, and all five call you.
 
-Ideally, we can design a protocol to circumvent some of these shortcomings understanding that the new consumers of the internet are meaningfully different from the existing consumers of the internet. Offers go into a topic, not to one named buyer, so a seller is publishing a standing offer rather than being dragged into a bidding war over one person. And who the buyer is never exposed publicly by the agent, so there's nothing to sell as a lead.
+Ideally, we can design a protocol to circumvent some of these shortcomings understanding that the new consumers of the internet are meaningfully different from the existing consumers of the internet. Offers go into a topic, not to one named buyer, so a seller is publishing a standing offer rather than being dragged into a bidding war over one person. And the buyer never sends a request, so there is no request to pass on as a lead. A subscription can be a lead too, though: someone watching `cars/ev/us` for three weeks is in the market, name or no name. So an agent subscribes to everything the operator carries and keeps the topics it cares about. Sellers post into narrow topics; buyers never say which ones they read.
 
 As previously stated, search is a snapshot. Inbound channels provide an elegant method for persistent and continuous discovery that is also token efficient. It does ask more of sellers, who now have to post offers into the topics their business fits. We think that's a fair trade. Every business once had to build a website so search engines could find it. Posting to Inbound is the agent-era version: a business runs a small offer-posting agent that helps keep their inventory and the posted offers in sync.
 
 ## Operators
 
-Operators create channels. Buyers subscribe to them.
+Operators create channels. Buyers subscribe to an operator and get everything it carries.
 
 An operator lets subscribed agents in and pushes updates to them when new offers come in. It also confirms when a sale happens.
 
@@ -82,13 +82,13 @@ The Inbound protocol itself can be small. It defines three objects, so a seller'
 | Channel | A named topic (`cars/ev/us`) holding an append-only log of offers. It also defines the format of the offers in the channel. | Channel Operator |
 | Offer | One typed, budget-capped, expiring offer posted into a channel. | Seller |
 
-Offers stick to the typed format their channel defines, with no free text. Free text would open up the system to prompt injection-like attacks that would be dangerous when broadcasted to agents at scale.
+Offers stick to the typed format their channel defines, with no free text. Free text would open up the system to prompt injection-like attacks that would be dangerous when broadcasted to agents at scale. Offers carry no links either. A link an agent follows tells the seller that someone looked, and when.
 
 Here's how one offer moves through it:
 
 1. **Find the channel:** A seller's agent looks up the right channel in the registry, along with the offer format that channel expects.
 2. **Post:** It signs an offer in that format and posts it. The channel's operator checks it fits the format and appends it to the channel's log. NB: here we can also check if the signed offer has a bond associated with it to prevent griefing.
-3. **Listen in on the channel:** Buyer agents subscribed to the channel read new offers from where they last left off, and match them against what their user wants. That matching happens on the buyer's side, so the channel never learns what anyone is looking for.
+3. **Listen broadly:** Buyer agents subscribe to everything the operator carries. They read new offers from where they last left off, keep the topics their user cares about, and match those offers against what their user wants. The filtering and the matching both happen on the buyer's side, so the operator learns that an agent is listening and nothing about what for.
 4. **Accept the offer:** When an offer fits, the agent shows it to the user. If they take it, the agent redeems it with the seller and the operator confirms the sale happened.
 
 ## Example
@@ -104,11 +104,24 @@ budget:     $5,000
 signed:     runfast
 ```
 
-Agents subscribed to that channel pull it down. One of them figures it's worth showing its user, next to everything else that landed in the channel that month. Runfast never finds out who saw it.
+Every agent listening to that operator pulls it down. One of them figures it's worth showing its user, next to everything else that landed in the channel that month. Runfast never finds out who saw it.
 
-The user buys $84 of shoes with the card in their wallet. The operator issued that card, so it sees the purchase go through: runfast, $84, October. Thirty days later, once the returns window has closed, the user gets $8.40 back and runfast gets a bill for $8.40 plus a flat fee.
+The user buys $84 of shoes with the card in their wallet. The operator issued that card, so it sees the purchase go through: runfast, $84, October. It would have seen that purchase anyway. What it does not learn is whether an agent had anything to do with it, or what else that agent weighed. There was no click, so Runfast's site saw an ordinary customer. Thirty days later, once the returns window has closed, the user gets $8.40 back and runfast gets a bill for $8.40 plus a flat fee.
 
 Runfast paid for a sale, not for a click.
+
+## Who can learn what
+
+With agents listening broadly, this is what each party can learn:
+
+| Party | Who the user is | Which topics their agent reads | Which offers it weighed | What the user bought |
+| --- | --- | --- | --- | --- |
+| Seller | At purchase, like any shop | No | No | Its own sale |
+| Operator | A network address | No | No | No, unless it settles the sale |
+| Card issuer | Yes | No | No | Yes, as with any purchase |
+| Agent host | Yes | Yes | Yes | Yes |
+
+In the example above the operator is also the card issuer, so those two rows are one party: it knows who the buyer is and what they bought, as an issuer always does, and nothing about what their agent read.
 
 ## Extension: private claims
 
@@ -117,6 +130,8 @@ The protocol above works without knowing anything about the buyer. A natural nex
 The cleanest way is to let sellers specify when they're willing to improve their offers. Alongside an offer, a seller posts **predicates** it would give better terms for, like "budget ≥ $30k" or "has never bought from runfast". The buyer's agent checks them locally and, if its user meets one, proves it with a zero-knowledge proof when accepting.
 
 The proof shows the predicate is true without revealing anything behind it: the seller learns the budget is over $30k, not what it is.
+
+Two cautions. The proof arrives with a purchase, so the seller learns it about a customer it can name. And predicates are public, so a seller can post several thresholds and watch which ones get claimed. An agent should prove only the predicate its chosen offer needs, and only at the moment of purchase.
 
 ## Demo
 
