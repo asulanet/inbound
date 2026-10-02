@@ -133,19 +133,6 @@ The user buys $84 of shoes with the card in their wallet. The operator issued th
 
 Runfast paid for a sale, not for a click.
 
-## Who can learn what
-
-With agents listening broadly, this is what each party can learn:
-
-| Party | Who the user is | Which topics their agent reads | Which offers it weighed | What the user bought |
-| --- | --- | --- | --- | --- |
-| Seller | At purchase, like any shop | No | No | Its own sale |
-| Operator | A network address | No | No | No, unless it settles the sale |
-| Card issuer | Yes | No | No | Yes, as with any purchase |
-| Agent host | Yes | Yes | Yes | Yes |
-
-In the example above the operator is also the card issuer, so those two rows are one party: it knows who the buyer is and what they bought, as an issuer always does, and nothing about what their agent read.
-
 ## Extension: private claims
 
 The protocol above works without knowing anything about the buyer. A natural next step is letting sellers make better offers to buyers with specific properties. For example, a verified budget or being a first-time customer.
@@ -154,7 +141,24 @@ The cleanest way is to let sellers specify when they're willing to improve their
 
 The proof shows the predicate is true without revealing anything behind it: the seller learns the budget is over $30k, not what it is.
 
-Two cautions. The proof arrives with a purchase, so the seller learns it about a customer it can name. And predicates are public, so a seller can post several thresholds and watch which ones get claimed. An agent should prove only the predicate its chosen offer needs, and only at the moment of purchase.
+## Privacy
+
+Inbound aims to keep the buyer's interests, budget, and shortlist inside their agent during discovery. Agents receive the same broad feed and filter it without reporting which offers they read. Reading an offer should trigger no seller requests or viewing reports.
+
+The agent provider remains trusted with the user's context. [Tracking Conversations](https://arxiv.org/pdf/2604.27438) and [Prompt like a Butterfly](https://jorgegarciaherrero.com/wp-content/interactivos/20260916-Prompt-like-a-butterfly-sting-like-a-tracker-%28clean%29.pdf) document conversation content and metadata reaching third parties through chatbot interfaces. The provider's interface, logs, and analytics therefore also need to protect the user's preferences and offer comparisons.
+
+With broad subscriptions, this is what each party can directly see:
+
+| Party | Who the user is | Which topics their agent reads | Which offers it weighed | What the user bought |
+| --- | --- | --- | --- | --- |
+| Seller | At purchase, like any shop | No | No | Its own sale |
+| Operator | A network address | No | No | No, unless it settles the sale |
+| Card issuer | Yes | No | No | Yes, as with any purchase |
+| Agent provider | Yes | Yes | Yes | If shared with the agent |
+
+The "No" entries mean no direct reporting; inference is still possible. Choosing a car-only operator may reveal an interest in cars. If one party fills multiple roles, its knowledge combines, as with the operator and card issuer in the example.
+
+A reservation could reveal the chosen offer before purchase, so any reservation handshake needs its own privacy design. Eligibility proofs reveal the condition proved, potentially about an identifiable customer, and repeated thresholds can reveal more. An agent should prove only the predicate its chosen offer needs, at the point it is required.
 
 ## Demo
 
