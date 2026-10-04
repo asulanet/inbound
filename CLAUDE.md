@@ -12,13 +12,20 @@ This file describes the finished demo. Where the code disagrees with it, the cod
 ## Scope
 
 An agent is told about offers instead of going to look, and decides locally what is worth its
-person's attention. In: a registry, channels as append-only logs pushed to subscribers, signed
-typed offers with predicates checked locally, directives and local ranking, HTTP + SSE with an MCP
-adapter, sellers simulated inside the server, one hosted instance.
+person's attention. In: a registry, one append-only feed across every channel pushed to
+subscribers, signed typed offers with predicates checked locally, directives and local filtering
+and ranking, HTTP + SSE with an MCP adapter, sellers simulated inside the server, one hosted
+instance.
 
 Out, on purpose: sellers posting over the network, acceptance and settlement, budgets, bonds,
-predicate proofs, a signed registry or directory of operators, an authenticated log, webhooks,
-agent state that survives a restart. The README names what is left out.
+predicate proofs, withdrawals, seller reputation, a signed registry or directory of operators, an
+authenticated log, webhooks, agent state that survives a restart. The README names what is left
+out.
+
+One feed, not one per channel. A subscription to a named channel is itself a disclosure, so the
+operator carries every channel on one log with one cursor and each agent keeps what its directive
+names. Each offer also carries its position within its own channel, so an agent can detect a gap
+in a channel it kept without naming that channel.
 
 ## Shape
 
@@ -66,21 +73,35 @@ the code is written, not more of it:
 
 | Route | Does |
 | --- | --- |
-| `GET /registry` | Channels, tips, and how to reach each |
-| `GET /channels/{name}/offers?since=N&limit=M` | One bounded page |
-| `GET /channels/{name}/stream?since=N` | SSE: backlog from N, then live. Event `id` is the position; `Last-Event-ID` is a cursor |
+| `GET /registry` | Which channels the operator carries, the feed's tip, and how to reach it |
+| `GET /feed/offers?since=N&limit=M` | One bounded page |
+| `GET /feed/stream?since=N` | SSE: backlog from N, then live. Event `id` is the position; `Last-Event-ID` is a cursor |
 | `POST /mcp` | The MCP adapter |
 
-No route takes anything about a reader beyond a channel name and a position. Nothing about a
-request is stored beyond a count of open streams. The server binds to `127.0.0.1` unless told
-otherwise; the container tells it otherwise.
+No route takes anything about a reader beyond a position. Nothing about a request is stored beyond
+a count of open streams. The server binds to `127.0.0.1` unless told otherwise; the container
+tells it otherwise.
 
-The MCP adapter lives in its own file, holds no state, and targets revision 2026-07-28 exactly.
-That revision is newer than Claude's training data: read <https://modelcontextprotocol.io/llms.txt>
-(changelog, Streamable HTTP, Subscriptions) before touching it. It serves `server/discover`,
-`tools/list`, `tools/call` (`list_channels`, `list_offers`), `resources/list`, `resources/read`
-and `subscriptions/listen`. The README says an LLM attached this way trusts the operator's
-rendering, and claims conformance only once a real client has attached, listed and listened.
+The MCP adapter lives in its own file and holds no state. It serves `initialize`, `tools/list`,
+`tools/call` (`list_channels`, `list_offers`), `resources/list` and `resources/read` (the channel
+catalogue), and the event methods `events/list`, `events/poll` and `events/stream`.
+
+The event methods follow the draft Triggers and Events extension, not the resource subscriptions
+in revision 2026-07-28, whose stream dies with the transport and keeps no subscription state
+across reconnects. Both are newer than Claude's training data: read
+<https://modelcontextprotocol.io/llms.txt> and
+<https://github.com/modelcontextprotocol/experimental-ext-triggers-events> before touching it.
+
+The operator carries exactly one event type, `inbound.offer`, with no subscription arguments. A
+filter in `arguments` would be evaluated by the operator, which is how it would learn what an
+agent is looking for. Two departures from the draft are deliberate and stay documented: replay
+from before the subscription began, and the whole signed offer in the payload rather than a
+minimal one fetched with a tool. Every position reported back to an agent — in `active`, in a
+heartbeat, in a poll — must be one the operator can stand behind, so a cursor past the end of the
+feed is clamped to it.
+
+The README says an LLM attached this way trusts the operator's rendering, and claims conformance
+only once a real client has attached, listed and listened.
 
 ## Testing
 

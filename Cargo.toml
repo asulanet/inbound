@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 
 [[bin]]
 name = "inbound-server"
-path = "src/bin/server.rs"
+path = "src/bin/server/main.rs"
 
 [[bin]]
 name = "inbound-watch"
@@ -24,6 +24,7 @@ axum = "0.8"
 bytes = "1"
 futures = "0.3"
 hex = "0.4"
+jiff = { version = "0.2", default-features = false, features = ["std"] }
 rand = "0.10"
 rand_chacha = "0.10"
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }

@@ -152,7 +152,7 @@ pub fn write_offer(rng: &mut ChaCha20Rng, seller: &Seller, now: u64, nonce: u64)
             },
             better,
             min_spend: seller.min_spend,
-            expires: now + rng.random_range(4..=12u64) * 86_400,
+            expires: now + rng.random_range(3..=9u64) * 60,
             nonce,
         },
     )
