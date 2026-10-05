@@ -11,6 +11,7 @@ mod mcp;
 
 use axum::Router;
 use axum::extract::{Query, State};
+use axum::http::header;
 use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::response::{IntoResponse, Json};
 use axum::routing::get;
@@ -35,6 +36,9 @@ pub struct Operator {
 
 pub type Shared = Arc<Operator>;
 
+/// The page, built into the binary so the demo is one command and one origin.
+const SITE: &str = include_str!("site.html");
+
 /// What an agent receives. `bytes` is the canonical encoding the seller signed, so an agent can
 /// check the signature itself rather than trusting these readable fields. `feed` is the cursor to
 /// resume from; `channel_seq` counts within this offer's own channel, so an agent keeping one
@@ -47,6 +51,7 @@ pub struct Wire {
     pub arrived: u64,
     pub seller: String,
     pub reward_bps: u16,
+    pub reward_cap: u64,
     pub best_bps: u16,
     pub min_spend: u64,
     pub expires: u64,
@@ -63,6 +68,7 @@ impl Wire {
             arrived: delivery.arrived,
             seller: name_of(&offer.body.seller),
             reward_bps: offer.body.reward.basis_points,
+            reward_cap: offer.body.reward.cap,
             best_bps: offer
                 .body
                 .better
@@ -151,7 +157,7 @@ async fn run(
     });
 
     let app = Router::new()
-        .route("/", get(registry))
+        .route("/", get(site))
         .route("/registry", get(registry))
         .route("/feed/stream", get(stream))
         .route("/feed/offers", get(offers))
@@ -166,11 +172,19 @@ async fn run(
     println!("  be told       curl -N {host}/feed/stream");
     println!("  catch up      curl -s '{host}/feed/offers?since=0'");
     println!("  or by mcp     {host}/mcp");
+    println!("  or in a browser {host}/");
     println!("\n  an offer lands every {every}s. whoever is listening is told.\n");
 
     let listener = tokio::net::TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], port))).await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+/// The page a person lands on. It is a reader like any other: it subscribes to the whole feed and
+/// decides on its own side, in the browser, against numbers nothing sends back. Served from the
+/// same origin as the feed so it needs no cross-origin grant.
+async fn site() -> impl IntoResponse {
+    ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], SITE)
 }
 
 /// How an agent finds anything. One URL in, everything it needs to subscribe out. It lists the

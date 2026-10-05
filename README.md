@@ -16,6 +16,10 @@ cargo run --bin inbound-server
 cargo run --bin inbound-watch -- http://127.0.0.1:7402 maya
 ```
 
+Or open <http://127.0.0.1:7402> and watch the feed arrive in a browser. The page is a reader like
+any other: it subscribes to the whole feed, and the directive you set there is applied in the
+browser against numbers nothing sends back.
+
 A third terminal makes the point, because the same operator gives a different answer:
 
 ```bash
@@ -179,6 +183,7 @@ way past has its offers dropped by the agents reading them.
 | `src/sellers.rs` | Ten made-up shops across three channels, so the feed has something in it. |
 | `src/bin/server/main.rs` | The registry, HTTP and SSE over the feed. |
 | `src/bin/server/mcp.rs` | The MCP adapter: the feed as one event type. |
+| `src/bin/server/site.html` | The page: the live feed, and a reader that decides in the browser. |
 | `src/bin/watch.rs` | An agent that reads the registry, subscribes, and acts on its directive. |
 
 Offers carry fixed fields and nothing a seller could write prose into, which is the point: an

@@ -73,10 +73,19 @@ the code is written, not more of it:
 
 | Route | Does |
 | --- | --- |
+| `GET /` | The page: the feed, live, and a reader that decides in the browser |
 | `GET /registry` | Which channels the operator carries, the feed's tip, and how to reach it |
 | `GET /feed/offers?since=N&limit=M` | One bounded page |
 | `GET /feed/stream?since=N` | SSE: backlog from N, then live. Event `id` is the position; `Last-Event-ID` is a cursor |
 | `POST /mcp` | The MCP adapter |
+
+The page is `src/bin/server/site.html`, built into the binary with `include_str!` so the demo is
+one command and one origin and needs no cross-origin grant. It is a reader like any other: it
+subscribes to the whole feed and decides on its own side, against numbers nothing sends back. It
+therefore repeats a little of what `rank.rs` does — keep by channel, drop what is expired or over
+the basket, and the base reward in money. It deliberately stops there: better terms key on a cap
+and a predicate the readable fields do not carry, and the page says so rather than guessing. It
+does not check signatures, and says that too.
 
 No route takes anything about a reader beyond a position. Nothing about a request is stored beyond
 a count of open streams. The server binds to `127.0.0.1` unless told otherwise; the container
