@@ -5,6 +5,7 @@
 //! the agent's whole brief, and none of it is ever sent to a channel or a seller.
 
 use crate::{Buyer, Offer, Ranked, rank};
+use commonware_cryptography::sha256::Digest;
 
 #[derive(Clone, Debug)]
 pub struct Directive {
@@ -37,8 +38,10 @@ pub enum Decision {
 pub struct Agent {
     pub buyer: Buyer,
     pub directive: Directive,
-    best: Option<u64>,
-    surfaced: bool,
+    /// The offer that is currently the answer, not the best worth ever seen. Holding a number
+    /// instead would leave the agent silent for good once its best offer expired, because nothing
+    /// still live could beat a figure that no longer stands.
+    held: Option<Digest>,
     pub ignored: u32,
 }
 
@@ -47,14 +50,9 @@ impl Agent {
         Self {
             buyer,
             directive,
-            best: None,
-            surfaced: false,
+            held: None,
             ignored: 0,
         }
-    }
-
-    pub fn best_so_far(&self) -> Option<u64> {
-        self.best
     }
 
     /// Rank everything held and decide whether this person wanted to hear about it.
@@ -68,18 +66,19 @@ impl Agent {
         buyer.basket = budget;
 
         let Some(top) = top_for(seen, &buyer, now) else {
+            self.held = None;
             self.ignored += 1;
             return Decision::Ignore;
         };
-        if !self.best.is_none_or(|best| top.worth > best) {
+        let answer = top.offer.id();
+        if self.held.as_ref() == Some(&answer) {
             self.ignored += 1;
             return Decision::Ignore;
         }
-        self.best = Some(top.worth);
+        self.held = Some(answer);
 
         let seller = crate::name_of(&top.offer.body.seller);
-        if top.worth >= self.directive.worth_waking_me && !self.surfaced {
-            self.surfaced = true;
+        if top.worth >= self.directive.worth_waking_me {
             return Decision::Surface {
                 seller,
                 worth: top.worth,
