@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbound</title>
+<meta name="description" content="A feed businesses post offers into, and agents subscribe to.">
+<style>
+:root {
+  --bg: #0c0d10;
+  --panel: #14161b;
+  --line: #262a33;
+  --ink: #e8eaed;
+  --soft: #9aa1ad;
+  --faint: #656c78;
+  --accent: #7cd4a0;
+  --warn: #e8c56a;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #fbfbfa; --panel: #fff; --line: #e3e3df;
+    --ink: #16181d; --soft: #5a616d; --faint: #8b929e;
+    --accent: #137a4b; --warn: #8a6612;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #fbfbfa; --panel: #fff; --line: #e3e3df;
+  --ink: #16181d; --soft: #5a616d; --faint: #8b929e;
+  --accent: #137a4b; --warn: #8a6612;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.6 var(--sans);
+  padding: 0 16px;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 56px 0 80px; }
+h1 { font-size: 15px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 28px; color: var(--soft); }
+h2 { font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 52px 0 14px; }
+.lead { font-size: 21px; line-height: 1.45; margin: 0 0 20px; letter-spacing: -.01em; }
+p { margin: 0 0 16px; color: var(--soft); }
+p.tight { margin-bottom: 8px; }
+strong { color: var(--ink); font-weight: 600; }
+a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+a:hover { border-bottom-color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.state { padding: 14px 16px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; transform: translateY(-2px); }
+.dot.on { background: var(--accent); }
+.dot.off { background: var(--warn); }
+.state .mono { color: var(--soft); }
+
+#feed { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow-y: auto; }
+#feed li {
+  display: grid; grid-template-columns: 56px 1fr auto; gap: 10px;
+  padding: 10px 16px; border-top: 1px solid var(--line);
+  font-family: var(--mono); font-size: 13px; align-items: baseline;
+}
+#feed li:first-child { border-top: 0; }
+#feed li.fresh { animation: in .5s ease; }
+@keyframes in { from { background: color-mix(in srgb, var(--accent) 12%, transparent); } to { background: transparent; } }
+.pos { color: var(--faint); }
+.who { color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+.who span { color: var(--faint); }
+.amt { color: var(--accent); white-space: nowrap; }
+.empty { padding: 22px 16px; color: var(--faint); font-family: var(--mono); font-size: 13px; }
+
+fieldset { border: 0; margin: 0; padding: 14px 16px; border-top: 1px solid var(--line); }
+legend { display: none; }
+.row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+label { font-size: 13px; color: var(--soft); display: flex; gap: 7px; align-items: center; }
+input[type=number] {
+  font-family: var(--mono); font-size: 13px; width: 92px;
+  background: var(--bg); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px;
+}
+input[type=checkbox] { accent-color: var(--accent); }
+.verdict { padding: 14px 16px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 13px; }
+.verdict b { color: var(--accent); font-weight: 600; }
+.verdict .none { color: var(--faint); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0 0 16px; display: block; overflow-x: auto; }
+th, td { text-align: left; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); font-weight: 600; }
+td { color: var(--soft); }
+td:first-child { color: var(--ink); }
+
+pre {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 16px; overflow-x: auto; margin: 0 0 16px;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.7; color: var(--soft);
+}
+pre b { color: var(--ink); font-weight: 400; }
+ul.plain { margin: 0 0 16px; padding-left: 20px; color: var(--soft); }
+ul.plain li { margin-bottom: 9px; }
+footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
+footer a { color: var(--soft); }
+.note { font-size: 13px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Inbound</h1>
+
+<p class="lead">One feed businesses post offers into, and agents subscribe to.</p>
+
+<p>An agent that wants something does not go looking for it. It subscribes once, is told when any
+offer lands, and keeps the channels its own person cares about. It ranks what it keeps against
+that person's situation, on its own machine, and bothers them once.</p>
+
+<p>The seller never learns who was listening. The operator never learns which channels anyone came
+for, because everyone reads the same stream.</p>
+
+<h2>Arriving now</h2>
+
+<div class="panel">
+  <div class="state">
+    <span class="dot" id="dot"></span>
+    <span class="mono" id="status">connecting…</span>
+    <span class="mono" id="count" style="margin-left:auto"></span>
+  </div>
+  <ul id="feed"></ul>
+  <div class="empty" id="empty">waiting for the first offer…</div>
+</div>
+
+<p class="note" style="margin-top:12px">Each row is <span class="mono">feed position · channel ·
+seller · reward</span>. Fictional sellers post on a timer. Nothing about you is sent to open this
+stream — there is no registration and no key exchange.</p>
+
+<h2>Your side of it</h2>
+
+<p>This is the part that happens on the agent, not the operator. Set what you would spend and which
+channels you keep. Nothing you type here leaves the page.</p>
+
+<div class="panel">
+  <fieldset style="border-top:0">
+    <legend>directive</legend>
+    <div class="row">
+      <label>would spend $<input type="number" id="basket" value="120" min="1" max="100000"></label>
+      <label>wake me above $<input type="number" id="bar" value="25" min="0" max="100000"></label>
+    </div>
+    <div class="row" id="channels" style="margin-top:12px"></div>
+  </fieldset>
+  <div class="verdict" id="verdict">nothing yet.</div>
+</div>
+
+<p class="note" style="margin-top:12px">That figure is the <strong>base</strong> reward only. Most
+offers carry better terms behind a condition — never bought here before, balance over some
+amount — and whether a condition holds is checked against facts the page does not have and the
+operator never sees. That check is the whole point, and it is why the same feed is worth different
+amounts to different people.</p>
+
+<h2>Who ends up knowing what</h2>
+
+<table>
+<thead><tr><th></th><th>Sees the offers</th><th>Sees who is listening</th><th>Sees what anyone wants</th><th>Sees the ranking</th></tr></thead>
+<tbody>
+<tr><td>Seller</td><td>its own</td><td>no</td><td>no</td><td>no</td></tr>
+<tr><td>Operator</td><td>all</td><td>a count</td><td>no</td><td>no</td></tr>
+<tr><td>Agent</td><td>all</td><td>itself</td><td>its own person</td><td>its own</td></tr>
+</tbody>
+</table>
+
+<p>The middle column is where the single feed earns its keep. A subscription to a named channel is
+itself a disclosure: an agent asking only for <code>cars/ev/us</code> would be telling the operator
+its person is shopping for a car, which is worth something whether or not a name comes with it.
+Taking everything costs bandwidth and reveals nothing.</p>
+
+<p>The operator's advantage over a search engine is not that it knows more. It knows strictly
+less. It is just pointed the other way.</p>
+
+<h2>Connect something to it</h2>
+
+<p>Nothing about the agents in this demo is special. The feed is plain HTTP.</p>
+
+<pre><b>curl</b> -N  /feed/stream            <span>· be told</span>
+<b>curl</b> -N  /feed/stream?since=0    <span>· backlog, then be told</span>
+<b>curl</b> -s  /feed/offers?since=0    <span>· catch up</span>
+<b>curl</b> -s  /registry               <span>· what exists</span></pre>
+
+<p>There is an MCP endpoint at <code>/mcp</code> too, so a connector-capable agent attaches by URL
+instead of someone writing a client. The operator carries exactly one event type,
+<code>inbound.offer</code>, with the channel as a field on the payload and no subscription
+arguments — a filter in the arguments would be evaluated by the operator, which is how it would
+learn what an agent is looking for.</p>
+
+<p>Every offer arrives as readable JSON <strong>and</strong> as <code>bytes</code>, the canonical
+encoding the seller signed. An agent checks that signature itself, so an operator that quietly
+rewrites a rate has its offers dropped by the agents reading them. This page does not check it —
+it renders what the operator served, and is the weaker reader for it.</p>
+
+<h2>What this leaves out</h2>
+
+<ul class="plain">
+<li><strong>Nothing is ever bought.</strong> Offers are received and ranked. Acceptance, settlement
+and billing are out of scope here, so no seller is ever charged.</li>
+<li><strong>The log is not authenticated.</strong> An agent can tell that an offer was not altered.
+It cannot tell that one was withheld — and withholding the best offer is an operator's most
+profitable move.</li>
+<li><strong>An offer cannot be withdrawn.</strong> The log only grows, so an offer stands until it
+expires. A seller-signed withdrawal is the missing piece.</li>
+<li><strong>Conditions are checked, never proved.</strong> The agent decides locally whether better
+terms apply. Proving that to a seller without giving up the reason is the extension.</li>
+<li><strong>Push only reaches a connected agent.</strong> The cursor exists because an agent that
+was switched off missed everything.</li>
+</ul>
+
+<footer>
+Built on <a href="https://github.com/commonwarexyz/monorepo">Commonware</a>. The write-up is
+<code>blog.md</code>; the code is about a thousand lines and meant to be read in one sitting.
+</footer>
+
+</div>
+
+<script>
+const feed = document.getElementById('feed');
+const empty = document.getElementById('empty');
+const dot = document.getElementById('dot');
+const status = document.getElementById('status');
+const countEl = document.getElementById('count');
+const verdict = document.getElementById('verdict');
+const basketEl = document.getElementById('basket');
+const barEl = document.getElementById('bar');
+const channelsEl = document.getElementById('channels');
+
+const held = [];
+const kept = new Set();
+let seen = 0;
+
+const money = (cents) => '$' + (cents / 100).toFixed(2);
+
+function channelBox(name) {
+  const label = document.createElement('label');
+  const box = document.createElement('input');
+  box.type = 'checkbox';
+  box.value = name;
+  box.checked = kept.has(name);
+  box.addEventListener('change', () => {
+    if (box.checked) kept.add(name); else kept.delete(name);
+    decide();
+  });
+  label.append(box, document.createTextNode(name));
+  channelsEl.append(label);
+}
+
+// The operator's own numbers: min(spend * bps / 10000, cap), the same shape as Reward::on.
+function baseWorth(offer, basket) {
+  return Math.min(Math.floor((basket * offer.reward_bps) / 10000), offer.reward_cap);
+}
+
+function decide() {
+  const basket = Math.max(1, Number(basketEl.value) || 0) * 100;
+  const bar = Math.max(0, Number(barEl.value) || 0) * 100;
+  const now = Math.floor(Date.now() / 1000);
+
+  const considered = held.filter((offer) =>
+    kept.has(offer.channel) && offer.expires > now && basket >= offer.min_spend);
+
+  if (!kept.size) {
+    verdict.innerHTML = '<span class="none">no channels kept. your agent is listening and discarding everything.</span>';
+    return;
+  }
+  if (!considered.length) {
+    verdict.innerHTML = '<span class="none">' + held.length + ' offer(s) seen, none of them yours yet.</span>';
+    return;
+  }
+
+  let best = considered[0];
+  let bestWorth = baseWorth(best, basket);
+  for (const offer of considered) {
+    const worth = baseWorth(offer, basket);
+    if (worth > bestWorth) { best = offer; bestWorth = worth; }
+  }
+
+  const tail = ' <span class="none">· ' + considered.length + ' of ' + held.length +
+    ' kept, at least ' + money(bestWorth) + ' before any condition</span>';
+  verdict.innerHTML = bestWorth >= bar
+    ? 'worth telling you → <b>' + best.seller + '</b>' + tail
+    : '<span class="none">holding ' + best.seller + ', under your ' + money(bar) + ' bar</span>' + tail;
+}
+
+function render(offer) {
+  const row = document.createElement('li');
+  row.className = 'fresh';
+  const pos = document.createElement('span');
+  pos.className = 'pos';
+  pos.textContent = '#' + offer.feed;
+  const who = document.createElement('span');
+  who.className = 'who';
+  who.innerHTML = '<span>' + offer.channel + '</span> ' + offer.seller;
+  const amt = document.createElement('span');
+  amt.className = 'amt';
+  amt.textContent = (offer.reward_bps / 100).toFixed(1) + '%';
+  row.append(pos, who, amt);
+  feed.prepend(row);
+  while (feed.children.length > 60) feed.lastChild.remove();
+}
+
+async function boot() {
+  let channels = [];
+  try {
+    const registry = await fetch('/registry').then((response) => response.json());
+    channels = (registry.channels || []).map((entry) => entry.channel);
+  } catch {
+    dot.className = 'dot off';
+    status.textContent = 'no operator here — start one with: cargo run --bin inbound-server';
+    empty.textContent = 'nothing to show until a feed is reachable.';
+    return;
+  }
+
+  channels.forEach(channelBox);
+  if (channels.length) kept.add(channels[0]);
+  channelsEl.querySelectorAll('input').forEach((box) => { box.checked = kept.has(box.value); });
+
+  const stream = new EventSource('/feed/stream?since=0');
+  stream.addEventListener('open', () => {
+    dot.className = 'dot on';
+    status.textContent = 'subscribed to every channel this operator carries';
+  });
+  stream.addEventListener('error', () => {
+    dot.className = 'dot off';
+    status.textContent = 'stream dropped — an agent would reconnect from its cursor';
+  });
+  stream.addEventListener('offer', (event) => {
+    let offer;
+    try { offer = JSON.parse(event.data); } catch { return; }
+    held.push(offer);
+    seen += 1;
+    empty.hidden = true;
+    countEl.textContent = seen + ' offer' + (seen === 1 ? '' : 's');
+    render(offer);
+    decide();
+  });
+
+  [basketEl, barEl].forEach((input) => input.addEventListener('input', decide));
+  decide();
+}
+
+boot();
+</script>
+</body>
+</html>
